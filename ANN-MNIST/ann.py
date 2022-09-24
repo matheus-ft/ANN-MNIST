@@ -54,3 +54,23 @@ class ANN:
             weights.append(random_theta * 2 * epislon - epislon)
         return weights
 
+    @staticmethod
+    def add_column_1s(array_like: np.matrix | ut.vector) -> np.matrix | ut.vector:
+        """Add a column of 1s to left of the data given.
+
+        Parameters
+        ----------
+        array_like : np.matrix | ut.vector
+            Iterable on which the column of 1s is added
+
+        Returns
+        -------
+        np.matrix | ut.vector
+            Same iterable with the additional column of 1s to the left
+        """
+        m = array_like.shape[0]  # rows
+        n = array_like.shape[1]  # columns
+        ones = np.ones((m, 1))
+        array = np.concatenate((ones, array_like), axis=1)
+        return ut.vector(array) if n == 1 else np.matrix(array)
+
