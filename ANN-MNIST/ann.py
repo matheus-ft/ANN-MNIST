@@ -10,14 +10,20 @@ class ANN:
         n_classes: int,
         n_neurons_per_layer: int,
         n_hidden_layers: int = 1,
+        activation_function=sigmoid,
     ) -> None:
         ### Architecture
+        self.__activation_function = sigmoid
         self.__number_classes = n_classes
         self.__number_hidden_layers = n_hidden_layers
         self.__neurons_per_layer: list[int] = self._neurons_list(n_neurons_per_layer)
         ### Data
         self._weights: list[np.matrix] = self._initialize_weights()
-        self._activation = [ut.vector(np.zeros(n_l)) for n_l in self.neurons_per_layer]
+        self._activation: list[ut.vector] = None
+
+    @property
+    def activation_function(self):
+        return self.__activation_function
 
     @property
     def number_classes(self) -> int:
@@ -74,3 +80,28 @@ class ANN:
         array = np.concatenate((ones, array_like), axis=1)
         return ut.vector(array) if n == 1 else np.matrix(array)
 
+    def _forward_pass(self, example: ut.vector) -> ut.vector:
+        """Calculates the activation for every neuron on the network.
+
+        Parameters
+        ----------
+        example : ut.vector
+            A single training example as a vector
+
+        Returns
+        -------
+        ut.vector
+            The activation of the network; its number of rows is the same as the number of classes
+        """
+        if self.activation is None:
+            self._activation = [
+                ut.vector(np.zeros(n_l)) for n_l in self.neurons_per_layer
+            ]
+        ex = self.add_column_1s(example)
+        z_0 = self.weights[0] @ ex
+        self._activation[0] = sigmoid(z_0)
+        for j in range(1, len(self.neurons_per_layer)):
+            a_j_1 = self.add_column_1s(self.activation[j - 1])
+            z_j = self.weights[j] @ a_j_1
+            self._activation[j] = ut.vector(self.activation_function(z_j))
+        return self.activation[-1]
