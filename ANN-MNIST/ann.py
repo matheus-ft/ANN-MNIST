@@ -10,17 +10,21 @@ class ANN:
         n_neurons_per_layer: int,
         n_hidden_layers: int = 1,
         activation_function=ut.sigmoid,
-        loss_function=ut.cross_entropy,
+        regularization_lambda: float = 0,
     ) -> None:
         ### Architecture
         self.__number_classes = n_classes
         self.__number_hidden_layers = n_hidden_layers
         self.__neurons_per_layer: list[int] = self._neurons_list(n_neurons_per_layer)
         self.__activation_function = activation_function
-        self.__loss_function = loss_function
         ### Data
         self._weights: list[np.matrix] = self._initialize_weights()
         self._activation: list[np.matrix] = None
+        self._gradient: list[np.matrix] = [
+            np.matrix(np.zeros(theta.shape)) for theta in self.weights
+        ]
+        ### Hyperparameters
+        self.regularization_lambda: float = regularization_lambda
 
     @property
     def number_classes(self) -> int:
@@ -39,16 +43,16 @@ class ANN:
         return self.__activation_function
 
     @property
-    def loss_function(self):
-        return self.__loss_function
-
-    @property
     def weights(self) -> list[np.matrix]:
         return self._weights
 
     @property
     def activation(self) -> list[np.matrix]:
         return self._activation
+
+    @property
+    def gradient(self) -> list[np.matrix]:
+        return self._gradient
 
     def _neurons_list(self, n_neurons_per_layer: int) -> list[int]:
         neurons_list = [n_neurons_per_layer] * self.number_hidden_layers
@@ -84,7 +88,7 @@ class ANN:
         array = np.concatenate((ones, data_matrix), axis=1)
         return np.matrix(array)
 
-    def _forward_pass(self, examples: np.matrix) -> np.matrix:
+    def _forward_pass(self, examples: np.matrix) -> None:
         m = examples.shape[0]  # number of examples
         if self.activation is None:
             self._activation = [
@@ -97,13 +101,36 @@ class ANN:
             a_j_1 = self.add_column_1s(self.activation[j - 1])
             z_j = a_j_1 @ self.weights[j].T
             self._activation[j] = self.activation_function(z_j)
-        return self.activation[-1]
 
-    def _back_propagation(self):
-        pass
+    def _backward_pass(self, labels: np.matrix) -> list[np.matrix]:
+        m = labels.shape[0]  # number of examples
+        H = self.number_hidden_layers
+        prediction = self.activation[H]  # last activation, i.e. output of the net
+        delta_L = prediction - labels
+        self._gradient[H] = prediction @ delta_L.T
+        for L in range(H - 1, -1, -1):  # goes to 0 bc the training data is not included
+            a_L = self.activation[L]
+            a_L = self.add_column_1s(a_L)  # needed only to match dimensions
+            theta_L = self.weights[L + 1]
+            delta_L = delta_L.T @ theta_L * a_L * (1 - a_L)
+            delta_L = delta_L[:, 1:]  # discarding the "delta" of the bias "feature"
+            D = a_L @ delta_L.T
+            self._gradient[L] = D / m
+        return self._regularized_gradient()
 
-    def fit(self, examples, labels):
-        pass
+    def _backpropagation(
+        self, examples: np.matrix, labels: np.matrix
+    ) -> list[np.matrix]:
+        self._forward_pass(examples)
+        return self._backward_pass(labels)
 
-    def predict(self, new_examples):
-        pass
+    def _regularized_gradient(self) -> list[np.matrix]:
+        _lambda = self.regularization_lambda
+        for L in range(self.number_hidden_layers + 1):
+            gradient = self.gradient[L]
+            m = gradient.shape[0]  # number of examples
+            regularized_theta = _lambda * self.weights[L] / m
+            regularized_theta[:, 0] *= m / _lambda  # not regularizing the bias
+            gradient += regularized_theta
+            self._gradient[L] = np.matrix(gradient)
+        return self.gradient
