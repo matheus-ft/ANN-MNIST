@@ -1,6 +1,6 @@
 import numpy as np
 import numpy.random as npr
-import utils as ut
+from . import utils as ut
 
 
 class ANN:
@@ -59,14 +59,19 @@ class ANN:
         neurons_list.append(self.number_classes)
         return neurons_list
 
+    @staticmethod
+    def _random_matrix(rows: int, columns: int) -> np.matrix:
+        epislon = (6 / (rows + columns - 1)) ** 0.5
+        arr = npr.rand(rows, columns)
+        return np.matrix(arr * 2 * epislon - epislon)
+
     def _initialize_weights(self) -> list[np.matrix]:
         weights = []
-        for i in range(self.number_hidden_layers + 1):
-            neurons_left = self.neurons_per_layer[i]
-            neurons_right = self.neurons_per_layer[i + 1]
-            epislon = (6 / (neurons_left + neurons_right)) ** 0.5
-            random_theta = npr.rand(neurons_right, neurons_left + 1)  # +1 due to bias
-            weights.append(random_theta * 2 * epislon - epislon)
+        for i in range(1, self.number_hidden_layers + 1):
+            neurons_left = self.neurons_per_layer[i - 1] + 1  # +1 for bias
+            neurons_right = self.neurons_per_layer[i]
+            random_theta = self._random_matrix(neurons_right, neurons_left)
+            weights.append(random_theta)
         return weights
 
     @staticmethod
@@ -90,6 +95,8 @@ class ANN:
 
     def _forward_pass(self, examples: np.matrix) -> None:
         m = examples.shape[0]  # number of examples
+        n = examples.shape[1]  # number of features
+        self._weights.insert(0, self._random_matrix(self.neurons_per_layer[0], n + 1))
         if self.activation is None:
             self._activation = [
                 np.matrix(np.zeros((m, n_l))) for n_l in self.neurons_per_layer
