@@ -19,7 +19,7 @@ class ANN:
         self.__neurons_per_layer: list[int] = self._neurons_list(n_neurons_per_layer)
         ### Data
         self._weights: list[np.matrix] = self._initialize_weights()
-        self._activation: list[ut.vector] = None
+        self._activation: list[np.matrix] = None
 
     @property
     def activation_function(self):
@@ -42,7 +42,7 @@ class ANN:
         return self._weights
 
     @property
-    def activation(self) -> list[ut.vector]:
+    def activation(self) -> list[np.matrix]:
         return self._activation
 
     def _neurons_list(self, n_neurons_per_layer: int) -> list[int]:
@@ -78,3 +78,18 @@ class ANN:
         ones = np.ones((m, 1))
         array = np.concatenate((ones, array_like), axis=1)
         return np.matrix(array)
+
+    def _forward_pass(self, examples: np.matrix) -> np.matrix:
+        m = examples.shape[0]  # number of examples
+        if self.activation is None:
+            self._activation = [
+                np.matrix(np.zeros((m, n_l))) for n_l in self.neurons_per_layer
+            ]
+        ex = self.add_column_1s(examples)
+        z_0 = ex @ self.weights[0].T
+        self._activation[0] = sigmoid(z_0)
+        for j in range(1, self.number_hidden_layers + 1):
+            a_j_1 = self.add_column_1s(self.activation[j - 1])
+            z_j = self.weights[j] @ a_j_1
+            self._activation[j] = self.activation_function(z_j)
+        return self.activation[-1]
