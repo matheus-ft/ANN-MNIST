@@ -50,19 +50,19 @@ def _binary_cross_entropy(label: np.ndarray, prediction: np.ndarray) -> float:
 
 
 def cross_entropy(
-    label: np.ndarray | np.matrix, prediction: np.ndarray | np.matrix
+    labels: np.ndarray | np.matrix, prediction: np.ndarray | np.matrix
 ) -> float:
-    if len(label.shape) == 1 == len(prediction.shape):
-        return _binary_cross_entropy(label, prediction)
-    elif label.shape != prediction.shape:
+    if len(labels.shape) == 1 == len(prediction.shape):
+        return _binary_cross_entropy(labels, prediction)
+    elif labels.shape != prediction.shape:
         raise Exception("`label` and `prediction` must have the same dimensions")
 
-    m = label.shape[0]  # number of examples
-    K = label.shape[1]  # number of classes
+    m = labels.shape[0]  # number of examples
+    K = labels.shape[1]  # number of classes
     J = 0
     for k in range(K):
-        odd_yes = label[:, k] * np.log(prediction[:, k])
-        odd_no = (1 - label[:, k]) * np.log(1 - prediction[:, k])
+        odd_yes = labels[:, k] * np.log(prediction[:, k])
+        odd_no = (1 - labels[:, k]) * np.log(1 - prediction[:, k])
         costs = odd_yes + odd_no
         J += sum(costs)
     return -J / m
