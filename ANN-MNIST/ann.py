@@ -1,6 +1,5 @@
 import numpy as np
 import numpy.random as npr
-from scipy.special import expit as sigmoid  # faster than using np.exp
 import utils as ut
 
 
@@ -10,20 +9,18 @@ class ANN:
         n_classes: int,
         n_neurons_per_layer: int,
         n_hidden_layers: int = 1,
-        activation_function=sigmoid,
+        activation_function=ut.sigmoid,
+        loss_function=ut.cross_entropy,
     ) -> None:
         ### Architecture
-        self.__activation_function = activation_function
         self.__number_classes = n_classes
         self.__number_hidden_layers = n_hidden_layers
         self.__neurons_per_layer: list[int] = self._neurons_list(n_neurons_per_layer)
+        self.__activation_function = activation_function
+        self.__loss_function = loss_function
         ### Data
         self._weights: list[np.matrix] = self._initialize_weights()
         self._activation: list[np.matrix] = None
-
-    @property
-    def activation_function(self):
-        return self.__activation_function
 
     @property
     def number_classes(self) -> int:
@@ -36,6 +33,14 @@ class ANN:
     @property
     def neurons_per_layer(self) -> list[int]:
         return self.__neurons_per_layer
+
+    @property
+    def activation_function(self):
+        return self.__activation_function
+
+    @property
+    def loss_function(self):
+        return self.__loss_function
 
     @property
     def weights(self) -> list[np.matrix]:
@@ -61,7 +66,7 @@ class ANN:
         return weights
 
     @staticmethod
-    def add_column_1s(array_like: np.matrix) -> np.matrix:
+    def add_column_1s(data_matrix: np.matrix) -> np.matrix:
         """Add a column of 1s to left of the data given.
 
         Parameters
@@ -74,9 +79,9 @@ class ANN:
         np.matrix | ut.vector
             Same iterable with the additional column of 1s to the left
         """
-        m = array_like.shape[0]  # rows
+        m = data_matrix.shape[0]
         ones = np.ones((m, 1))
-        array = np.concatenate((ones, array_like), axis=1)
+        array = np.concatenate((ones, data_matrix), axis=1)
         return np.matrix(array)
 
     def _forward_pass(self, examples: np.matrix) -> np.matrix:
@@ -87,9 +92,18 @@ class ANN:
             ]
         ex = self.add_column_1s(examples)
         z_0 = ex @ self.weights[0].T
-        self._activation[0] = sigmoid(z_0)
+        self._activation[0] = self.activation_function(z_0)
         for j in range(1, self.number_hidden_layers + 1):
             a_j_1 = self.add_column_1s(self.activation[j - 1])
-            z_j = self.weights[j] @ a_j_1
+            z_j = a_j_1 @ self.weights[j].T
             self._activation[j] = self.activation_function(z_j)
         return self.activation[-1]
+
+    def _back_propagation(self):
+        pass
+
+    def fit(self, examples, labels):
+        pass
+
+    def predict(self, new_examples):
+        pass
