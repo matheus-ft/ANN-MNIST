@@ -3,20 +3,33 @@ import numpy.random as npr
 from . import utils as ut
 
 
+class model_hyperparams:
+    def __init__(
+        self,
+        activation_function=ut.sigmoid,
+        loss_function=ut.cross_entropy,
+        use_xavier: bool = True,
+    ) -> None:
+        self.activation_function = activation_function
+        self.loss_function = loss_function
+        self.use_xavier = use_xavier
+
+
 class ANN:
     def __init__(
         self,
         n_classes: int,
         n_neurons_per_layer: int,
         n_hidden_layers: int = 1,
-        activation_function=ut.sigmoid,
+        model=model_hyperparams(),
         regularization_lambda: float = 0,
     ) -> None:
         ### Architecture
         self.__number_classes = n_classes
         self.__number_hidden_layers = n_hidden_layers
         self.__neurons_per_layer: list[int] = self._neurons_list(n_neurons_per_layer)
-        self.__activation_function = activation_function
+        self.__activation_function = model.activation_function
+        self.__use_xavier: bool = model.use_xavier
         ### Data
         self._weights: list[np.matrix] = self._initialize_weights()
         self._activation: list[np.matrix] = None
@@ -43,6 +56,10 @@ class ANN:
         return self.__activation_function
 
     @property
+    def use_xavier(self) -> bool:
+        return self.__use_xavier
+
+    @property
     def weights(self) -> list[np.matrix]:
         return self._weights
 
@@ -62,15 +79,27 @@ class ANN:
     @staticmethod
     def _random_matrix_xavier(rows: int, columns: int) -> np.matrix:
         epislon = (6 / (rows + columns - 1)) ** 0.5
-        arr = npr.rand(rows, columns)
+        arr = npr.rand(rows, columns)  # uniform distribution
         return np.matrix(arr * 2 * epislon - epislon)
+
+    @staticmethod
+    def _random_matrix_he(rows: int, columns: int) -> np.matrix:
+        sigma = (2 / (rows + columns - 1)) ** 0.5
+        arr = npr.randn(rows, columns)  # normal distribution
+        return np.matrix(arr * sigma)
+
+    def _random_matrix(self, rows: int, columns: int) -> np.matrix:
+        if self.use_xavier:
+            return self._random_matrix_xavier(rows, columns)
+        else:
+            return self._random_matrix_he(rows, columns)
 
     def _initialize_weights(self) -> list[np.matrix]:
         weights = []
         for i in range(1, self.number_hidden_layers + 1):
             neurons_left = self.neurons_per_layer[i - 1] + 1  # +1 for bias
             neurons_right = self.neurons_per_layer[i]
-            random_theta = self._random_matrix_xavier(neurons_right, neurons_left)
+            random_theta = self._random_matrix(neurons_right, neurons_left)
             weights.append(random_theta)
         return weights
 
@@ -98,7 +127,7 @@ class ANN:
         n = examples.shape[1]  # number of features
         if len(self.weights) == self.number_hidden_layers:
             self._weights.insert(  # meaning the bias is missing
-                0, self._random_matrix_xavier(self.neurons_per_layer[0], n + 1)
+                0, self._random_matrix(self.neurons_per_layer[0], n + 1)
             )
         if self.activation is None:
             self._activation = [
