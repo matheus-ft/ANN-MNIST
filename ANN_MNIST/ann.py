@@ -3,6 +3,18 @@ import numpy.random as npr
 from . import utils as ut
 
 
+class training_hyperparams:
+    def __init__(
+        self,
+        learning_rate: float,
+        regularization_lambda: float = 0,
+        optimizer=ut.gradient_descent,
+    ) -> None:
+        self.learning_rate: float = learning_rate
+        self.regularization_lambda: float = regularization_lambda
+        self.optimizer = optimizer
+
+
 class model_hyperparams:
     def __init__(
         self,
@@ -22,7 +34,6 @@ class ANN:
         n_neurons_per_layer: int,
         n_hidden_layers: int = 1,
         model=model_hyperparams(),
-        regularization_lambda: float = 0,
     ) -> None:
         ### Architecture
         self.__number_classes = n_classes
@@ -36,8 +47,6 @@ class ANN:
         self._gradient: list[np.matrix] = [
             np.matrix(np.zeros(theta.shape)) for theta in self.weights
         ]
-        ### Hyperparameters
-        self.regularization_lambda: float = regularization_lambda
 
     @property
     def number_classes(self) -> int:
@@ -155,21 +164,39 @@ class ANN:
             delta_L = delta_L[:, 1:]  # discarding the "delta" of the bias "feature"
             D = a_L @ delta_L.T
             self._gradient[L] = D / m
-        return self._regularized_gradient()
+        return self.gradient
 
-    def _backpropagation(
+    def backpropagation(
         self, examples: np.matrix, labels: np.matrix
     ) -> list[np.matrix]:
         self._forward_pass(examples)
         return self._backward_pass(labels)
 
-    def _regularized_gradient(self) -> list[np.matrix]:
-        _lambda = self.regularization_lambda
+    def _regularized_gradient(self, reg_lambda: float) -> list[np.matrix]:
         for L in range(self.number_hidden_layers + 1):
             gradient = self.gradient[L]
             m = gradient.shape[0]  # number of examples
-            regularized_theta = _lambda * self.weights[L] / m
-            regularized_theta[:, 0] *= m / _lambda  # not regularizing the bias
+            regularized_theta = reg_lambda * self.weights[L] / m
+            regularized_theta[:, 0] *= m / reg_lambda  # not regularizing the bias
             gradient += regularized_theta
             self._gradient[L] = np.matrix(gradient)
         return self.gradient
+
+    def _optimize(
+        self, input: np.matrix, output: np.matrix, training_params: training_hyperparams
+    ) -> list[np.matrix]:
+        learning_rate = training_params.learning_rate
+        reg_lambda = training_params.regularization_lambda
+        optimizer = training_params.optimizer
+        return self.weights
+
+    def fit(
+        self,
+        examples: np.matrix,
+        labels: np.matrix,
+        training_params: training_hyperparams,
+    ) -> list[np.matrix]:
+        return self._optimize(examples, labels, training_params)
+
+    def predict(self, examples: np.matrix) -> np.matrix:
+        pass
