@@ -7,24 +7,14 @@ class training_hyperparams:
     def __init__(
         self,
         learning_rate: float,
+        number_iterations: int,
         regularization_lambda: float = 0,
         optimizer=ut.gradient_descent,
     ) -> None:
         self.learning_rate: float = learning_rate
+        self.number_iterations: int = number_iterations
         self.regularization_lambda: float = regularization_lambda
         self.optimizer = optimizer
-
-
-class model_hyperparams:
-    def __init__(
-        self,
-        activation_function=ut.sigmoid,
-        loss_function=ut.cross_entropy,
-        use_xavier: bool = True,
-    ) -> None:
-        self.activation_function = activation_function
-        self.loss_function = loss_function
-        self.use_xavier = use_xavier
 
 
 class ANN:
@@ -33,20 +23,27 @@ class ANN:
         n_classes: int,
         n_neurons_per_layer: int,
         n_hidden_layers: int = 1,
-        model=model_hyperparams(),
     ) -> None:
         ### Architecture
         self.__number_classes = n_classes
         self.__number_hidden_layers = n_hidden_layers
         self.__neurons_per_layer: list[int] = self._neurons_list(n_neurons_per_layer)
-        self.__activation_function = model.activation_function
-        self.__use_xavier: bool = model.use_xavier
         ### Data
         self._weights: list[np.matrix] = self._initialize_weights()
         self._activation: list[np.matrix] = None
         self._gradient: list[np.matrix] = [
             np.matrix(np.zeros(theta.shape)) for theta in self.weights
         ]
+
+    @staticmethod
+    def activation_function(z: float | np.ndarray):
+        return ut.sigmoid(z)
+
+    @staticmethod
+    def loss_function(
+        labels: np.ndarray | np.matrix, prediction: np.ndarray | np.matrix
+    ):
+        return ut.cross_entropy(labels, prediction)
 
     @property
     def number_classes(self) -> int:
@@ -59,14 +56,6 @@ class ANN:
     @property
     def neurons_per_layer(self) -> list[int]:
         return self.__neurons_per_layer
-
-    @property
-    def activation_function(self):
-        return self.__activation_function
-
-    @property
-    def use_xavier(self) -> bool:
-        return self.__use_xavier
 
     @property
     def weights(self) -> list[np.matrix]:
@@ -91,24 +80,12 @@ class ANN:
         arr = npr.rand(rows, columns)  # uniform distribution
         return np.matrix(arr * 2 * epislon - epislon)
 
-    @staticmethod
-    def _random_matrix_he(rows: int, columns: int) -> np.matrix:
-        sigma = (2 / (rows + columns - 1)) ** 0.5
-        arr = npr.randn(rows, columns)  # normal distribution
-        return np.matrix(arr * sigma)
-
-    def _random_matrix(self, rows: int, columns: int) -> np.matrix:
-        if self.use_xavier:
-            return self._random_matrix_xavier(rows, columns)
-        else:
-            return self._random_matrix_he(rows, columns)
-
     def _initialize_weights(self) -> list[np.matrix]:
         weights = []
         for i in range(1, self.number_hidden_layers + 1):
             neurons_left = self.neurons_per_layer[i - 1] + 1  # +1 for bias
             neurons_right = self.neurons_per_layer[i]
-            random_theta = self._random_matrix(neurons_right, neurons_left)
+            random_theta = self._random_matrix_xavier(neurons_right, neurons_left)
             weights.append(random_theta)
         return weights
 
@@ -136,7 +113,7 @@ class ANN:
         n = examples.shape[1]  # number of features
         if len(self.weights) == self.number_hidden_layers:
             self._weights.insert(  # meaning the bias is missing
-                0, self._random_matrix(self.neurons_per_layer[0], n + 1)
+                0, self._random_matrix_xavier(self.neurons_per_layer[0], n + 1)
             )
         if self.activation is None:
             self._activation = [
@@ -181,22 +158,3 @@ class ANN:
             gradient += regularized_theta
             self._gradient[L] = np.matrix(gradient)
         return self.gradient
-
-    def _optimize(
-        self, input: np.matrix, output: np.matrix, training_params: training_hyperparams
-    ) -> list[np.matrix]:
-        learning_rate = training_params.learning_rate
-        reg_lambda = training_params.regularization_lambda
-        optimizer = training_params.optimizer
-        return self.weights
-
-    def fit(
-        self,
-        examples: np.matrix,
-        labels: np.matrix,
-        training_params: training_hyperparams,
-    ) -> list[np.matrix]:
-        return self._optimize(examples, labels, training_params)
-
-    def predict(self, examples: np.matrix) -> np.matrix:
-        pass
