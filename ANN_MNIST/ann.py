@@ -9,12 +9,12 @@ class training_hyperparams:
         learning_rate: float,
         number_iterations: int,
         regularization_lambda: float = 0,
-        optimizer=ut.gradient_descent,
+        optimizer: str = "GD",
     ) -> None:
         self.learning_rate: float = learning_rate
         self.number_iterations: int = number_iterations
         self.regularization_lambda: float = regularization_lambda
-        self.optimizer = optimizer
+        self.optimizer: str = optimizer
 
 
 class ANN:
@@ -91,16 +91,17 @@ class ANN:
 
     @staticmethod
     def add_column_1s(data_matrix: np.matrix) -> np.matrix:
-        """Add a column of 1s to left of the data given.
+        """Add a column of 1s to left of the data given *without* modifying the
+        original.
 
         Parameters
         ----------
-        array_like : np.matrix | ut.vector
+        array_like : np.matrix
             Iterable on which the column of 1s is added
 
         Returns
         -------
-        np.matrix | ut.vector
+        np.matrix
             Same iterable with the additional column of 1s to the left
         """
         m = data_matrix.shape[0]
@@ -158,3 +159,58 @@ class ANN:
             gradient += regularized_theta
             self._gradient[L] = np.matrix(gradient)
         return self.gradient
+
+    def _gradient_descent(
+        self,
+        number_iterations: int,
+        examples: np.matrix,
+        labels: np.matrix,
+        reg_lambda: float,
+        learning_rate: float,
+    ) -> list[np.matrix]:
+        cost_history = []
+        for _ in range(number_iterations):
+            self.backpropagation(examples, labels)
+            gradient_list = self._regularized_gradient(reg_lambda)
+            cost_history.append(self.loss_function(labels, self.activation[-1]))
+            for i in range(len(gradient_list)):
+                theta = self.weights[i]
+                theta -= learning_rate * gradient_list[i]
+                self._weights[i] = np.matrix(theta)
+        return self.weights
+
+    def _optimize(
+        self,
+        examples: np.matrix,
+        labels: np.matrix,
+        training_params: training_hyperparams,
+    ) -> list[np.matrix]:
+        learning_rate = training_params.learning_rate
+        number_iterations = training_params.number_iterations
+        reg_lambda = training_params.regularization_lambda
+        optimizer = training_params.optimizer
+        if optimizer == "GD":
+            return self._gradient_descent(
+                number_iterations, examples, labels, reg_lambda, learning_rate
+            )
+        else:
+            raise Exception(f"Method {optimizer} not available")
+
+    def fit(
+        self,
+        examples: np.matrix,
+        labels: np.matrix,
+        training_params: training_hyperparams,
+    ) -> list[np.matrix]:
+        return self._optimize(examples, labels, training_params)
+
+    def predict(self, examples: np.matrix) -> np.matrix:
+        activation: list[np.matrix] = []
+        ex = self.add_column_1s(examples)
+        z_0 = ex @ self.weights[0].T
+        activation.append(self.activation_function(z_0))
+        for j in range(1, self.number_hidden_layers + 1):
+            a_j_1 = self.add_column_1s(activation[j - 1])
+            z_j = a_j_1 @ self.weights[j].T
+            activation.append(self.activation_function(z_j))
+        return activation[-1]
