@@ -60,7 +60,7 @@ class ANN:
         return neurons_list
 
     @staticmethod
-    def _random_matrix(rows: int, columns: int) -> np.matrix:
+    def _random_matrix_xavier(rows: int, columns: int) -> np.matrix:
         epislon = (6 / (rows + columns - 1)) ** 0.5
         arr = npr.rand(rows, columns)
         return np.matrix(arr * 2 * epislon - epislon)
@@ -70,7 +70,7 @@ class ANN:
         for i in range(1, self.number_hidden_layers + 1):
             neurons_left = self.neurons_per_layer[i - 1] + 1  # +1 for bias
             neurons_right = self.neurons_per_layer[i]
-            random_theta = self._random_matrix(neurons_right, neurons_left)
+            random_theta = self._random_matrix_xavier(neurons_right, neurons_left)
             weights.append(random_theta)
         return weights
 
@@ -96,7 +96,10 @@ class ANN:
     def _forward_pass(self, examples: np.matrix) -> None:
         m = examples.shape[0]  # number of examples
         n = examples.shape[1]  # number of features
-        self._weights.insert(0, self._random_matrix(self.neurons_per_layer[0], n + 1))
+        if len(self.weights) == self.number_hidden_layers:
+            self._weights.insert(  # meaning the bias is missing
+                0, self._random_matrix_xavier(self.neurons_per_layer[0], n + 1)
+            )
         if self.activation is None:
             self._activation = [
                 np.matrix(np.zeros((m, n_l))) for n_l in self.neurons_per_layer
