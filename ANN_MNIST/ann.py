@@ -169,7 +169,7 @@ class ANN:
         labels: ut.matrix,
         reg_lambda: float,
         learning_rate: float,
-    ) -> list[ut.matrix]:
+    ) -> tuple[list[ut.matrix], list[float]]:
         cost_history = []
         for _ in range(number_iterations):
             self.backpropagation(examples, labels)
@@ -179,14 +179,14 @@ class ANN:
                 theta = self.weights[i]
                 theta -= learning_rate * gradient_list[i]
                 self._weights[i] = ut.matrix(theta)
-        return self.weights
+        return self.weights, cost_history
 
     def _optimize(
         self,
         examples: ut.matrix,
         labels: ut.matrix,
         training_params: training_hyperparams,
-    ) -> list[ut.matrix]:
+    ) -> tuple[list[ut.matrix], list[float]]:
         learning_rate = training_params.learning_rate
         number_iterations = training_params.number_iterations
         reg_lambda = training_params.regularization_lambda
@@ -203,7 +203,7 @@ class ANN:
         examples: ut.matrix,
         labels: ut.matrix,
         training_params: training_hyperparams,
-    ) -> list[ut.matrix]:
+    ) -> tuple[list[ut.matrix], list[float]]:
         return self._optimize(examples, labels, training_params)
 
     def predict(self, examples: ut.matrix) -> ut.matrix:
