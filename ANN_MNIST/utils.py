@@ -2,6 +2,31 @@ import numpy as np
 from scipy.special import expit  # np.exp is slower and math.exp can't receive array
 
 
+class matrix(np.ndarray):
+    """2-dimensional numpy array representing a matrix.
+
+    Extends the numpy.ndarray class to be able to build a matrix by:
+        a) list of lists
+
+        b) numpy 2d array
+
+    Parameters
+    ----------
+    array_like : list[list[float]] | np.ndarray
+        iterable from which the matrix is created
+    """
+
+    def __new__(cls, array_like: list[list[float]] | np.ndarray):
+        m = array_like
+        if type(m) == list:
+            m = np.array(array_like)
+        elif type(m) == np.ndarray:
+            if m.ndim != 2:
+                raise Exception("Not possible to create a matrix from a non 2d array")
+        m = np.asarray(m).view(cls)  # to make it behave as its own "data type"
+        return m
+
+
 def sigmoid(z: float | np.ndarray):
     """Gives the sigmoid logistic function value on z.
 
@@ -50,7 +75,7 @@ def _binary_cross_entropy(label: np.ndarray, prediction: np.ndarray) -> float:
 
 
 def cross_entropy(
-    labels: np.ndarray | np.matrix, prediction: np.ndarray | np.matrix
+    labels: np.ndarray | matrix, prediction: np.ndarray | matrix
 ) -> float:
     if len(labels.shape) == 1 == len(prediction.shape):
         return _binary_cross_entropy(labels, prediction)
