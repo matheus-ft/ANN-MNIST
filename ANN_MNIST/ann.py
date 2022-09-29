@@ -143,7 +143,8 @@ class ANN:
             theta_L = self.weights[L + 1][:, 1:]  # discarding the bias
             delta_L = delta_L @ theta_L * a_L * (1 - a_L)
         ex = self.add_column_1s(self._training_data)
-        self._gradient[0] = delta_L.T @ ex
+        D = delta_L.T @ ex
+        self._gradient[0] = D / m
         return self.gradient
 
     def backpropagation(
