@@ -64,9 +64,7 @@ def computeCost(X,y,theta,layer_list, Lambda):
         ponteiro += (layer_list[i]+1)*layer_list[i+1] # setando o ponteiro
         
     
-    theta1 = theta_list[0]
-    theta2 = theta_list[1]
-    
+
   
     
     m = X.shape[0]
@@ -82,9 +80,9 @@ def computeCost(X,y,theta,layer_list, Lambda):
     #adicionando o Bias ao a0 antes de realizar os calculos
     a[0] = np.hstack((np.ones((m,1)),a[0]))
     
-    #Calculando a1,a2...an e salvando em uma lista
+    #Calculando a1,a2...an-1 e salvando em uma lista
     for i in range(1,len(theta_list)-1):
-        a_tmp = sigmoid( a[i-1] @ theta[i].T )
+        a_tmp = sigmoid( a[i-1] @ theta_list[i].T )
         a_tmp = np.hstack((np.ones((m,1)),a_tmp))
         a.append(a_tmp)
         
@@ -101,19 +99,26 @@ def computeCost(X,y,theta,layer_list, Lambda):
     for i in range(1,num_labels+1):
         y10[:,i-1][:,np.newaxis] = np.where(y==i,1,0)
     for j in range(num_labels):
-        J = J + sum(-y10[:,j]*np.log(a2[:,j])-(1-y10[:,j])*np.log(1-a2[:,j]))
+        J = J + sum(-y10[:,j]*np.log(a[-1][:,j])-(1-y10[:,j])*np.log(1-a[-1][:,j]))
         
     cost = J/m
-    reg_J = cost + Lambda/(2*m)*(np.sum(theta1[:,1:]**2)+np.sum(theta2[:,1:]**2))
+    
+    reg_J = 0
+    for t in theta_list:
+        reg_J += np.sum(t[:,1:]**2)
+    
+    #reg_J = cost + Lambda/(2*m)*(np.sum(theta1[:,1:]**2)+np.sum(theta2[:,1:]**2))
+    
+    reg_J = cost + reg_J*Lambda/(2*m) 
          
-    grads = [] # lista de gradientes
+    grad_list = [] # lista de gradientes
     
     #Criando uma lista contendo grad1,grad2...gradn, onde todos os elementos são iguais a 0
     for i in range(len(theta_list)):
-        grads.append(np.zeros((theta[i].shape)))
+        grad_list.append(np.zeros((theta_list[i].shape)))
                         
-    grad1 = grads[0]
-    grad2 = grads[1]
+    grad1 = grad_list[0]
+    grad2 = grad_list[1]
                                  
     for i in range(m):
         xi = X[i,:]
@@ -136,29 +141,48 @@ def computeCost(X,y,theta,layer_list, Lambda):
         # ** Aqui é -2 porque o len conta 1,2,3...,enquanto uma lista tem indice 0,1,2...
         for k in range(len(dj) -2 ,-1,-1):
             if k == 0:
-                dj[k] = theta_list[k+1].T @ dj[k+1].T * sigmoidGradient(np.hstack((1,xi @ theta_list[k].T)))
+                dj[k] = (theta_list[k+1].T)[1:] @ dj[k+1] * ( sigmoidGradient(np.hstack((1,xi @ theta_list[k].T)))[1:] )
             #O erro da camada n, será Theta(n+1) @ erro da camada(n+1), * ativação da camada n
+            
+            elif k == len(dj) -2:
+                dj[k] = (theta_list[k+1].T)[1:] @ dj[k+1] * ( ((aji[k] * (1 - aji[k])))[1:] )
+            
             else:
-                dj[k] = theta_list[k+1].T @ dj[k+1].T * (aji[k] * (1 - aji[k]))
+                dj[k] = (theta_list[k+1].T)[1:] @ dj[k+1] * ( ((aji[k] * (1 - aji[k])))[1:] )
         
         d2 = dj[1]
         d1 = dj[0]
         
-        for  k  in range(len(grads)-1):
-            grads[k] = grads[k] + dj[k][1:][:,np.newaxis]@xi[:,np.newaxis].T
+        for  k  in range(len(grad_list)-1):
+            if k == 0:
+                grad_list[k] = grad_list[k] + dj[k][:,np.newaxis]@xi[:,np.newaxis].T
+            else:
+                grad_list[k] = grad_list[k] + dj[k][:,np.newaxis]@ (a[k-1][i,:])[:,np.newaxis].T
         
-        grads[-1] = grads[-1] + dj[-1][:].T[:,np.newaxis]@a1i[:,np.newaxis].T
+        grad_list[-1] = grad_list[-1] + dj[-1][:,np.newaxis] @ (a[-2][i,:])[:,np.newaxis].T
         
         # grad1 = grad1 + d1[1:][:,np.newaxis]@xi[:,np.newaxis].T
         # grad2 = grad2 + d2.T[:,np.newaxis]@a1i[:,np.newaxis].T    
                      
-    grad1 = 1/m*grads[0]
-    grad2 = 1/m*grads[-1]
-                                 
-    grad1_reg = grad1 + (Lambda/m)*np.hstack((np.zeros((theta1.shape[0],1)),theta1[:,1:]))
-    grad2_reg = grad2 + (Lambda/m)*np.hstack((np.zeros((theta2.shape[0],1)),theta2[:,1:]))
-                                 
-    return cost,grad1,grad2,reg_J,grad1_reg,grad2_reg,theta_list
+    
+    for _ in range(len(grad_list)):
+        grad_list[_] =  grad_list[_] * 1/m
+    
+    grad1 = grad_list[0]
+    grad2 = grad_list[-1]
+    
+    grad_list_reg = []
+    
+    for r in range(len(grad_list)):
+        grad_reg =  grad_list[r] + (Lambda/m) * np.hstack((np.zeros((theta_list[r].shape[0],1)),theta_list[r][:,1:]))
+        grad_list_reg.append(grad_reg)
+        #grad1_reg = grad1 + (Lambda/m)*np.hstack((np.zeros((theta1.shape[0],1)),theta1[:,1:]))
+        #grad2_reg = grad2 + (Lambda/m)*np.hstack((np.zeros((theta2.shape[0],1)),theta2[:,1:]))                
+    grad1_reg = grad_list_reg[0]
+    grad2_reg = grad_list_reg[1]
+    
+    return cost, grad_list, reg_J, grad_list_reg,theta_list
+    #return cost, grad1,grad2 ,reg_J, grad1_reg,grad2_reg,theta_list
 
 
 
@@ -170,59 +194,92 @@ def randInitializeWeights(L_in,L_out):
 
 
 # %%
-def gradientDescent(X,y,theta,alpha,nbr_iter,Lambda,input_layer_size,hidden_layer_size,num_labels):
-    theta1 = theta[:((input_layer_size+1)*hidden_layer_size)].reshape(hidden_layer_size,input_layer_size+1)
-    theta2 = theta[((input_layer_size+1)*hidden_layer_size):].reshape(num_labels,hidden_layer_size+1)
+def gradientDescent(X,y,theta,alpha,nbr_iter,Lambda,layer_list):
+    theta_list = [] # lista de thetas
+    ponteiro = 0 # ponteiro para indicar qual parte da lista estamos.
+    
+    #Construindo as matrizes theta1, theta2.... thetan
+    for i in range(len(layer_list)-1):
+        
+        theta_tmp = theta[ponteiro : ponteiro + ((layer_list[i]+1)*layer_list[i+1])].reshape(layer_list[i+1],layer_list[i]+1)
+        
+        theta_list.append(theta_tmp)
+        
+        ponteiro += (layer_list[i]+1)*layer_list[i+1] # setando o ponteiro
+    
+   # theta1 = theta[:((input_layer_size+1)*hidden_layer_size)].reshape(hidden_layer_size,input_layer_size+1)
+   # theta2 = theta[((input_layer_size+1)*hidden_layer_size):].reshape(num_labels,hidden_layer_size+1)
     
     m = len(y)
     J_history = []
     
     for i in range(nbr_iter):
-        theta = np.append(theta1.flatten(),theta2.flatten())
-        cost,grad1,grad2 = computeCost(X,y,theta, [input_layer_size,hidden_layer_size,num_labels] ,Lambda)[3:6]
-        theta1 = theta1 - (alpha*grad1)
-        theta2 = theta2 - (alpha*grad2)
+        theta = np.append(theta_list[0].flatten(),theta_list[1].flatten())
+        for _ in range(2,len(theta_list)):
+            theta = np.append(theta, theta_list[_].flatten())
+            
+        cost,grad_list_reg = computeCost(X,y,theta, layer_list ,Lambda)[2:4]
+        
+        for j in range(len(theta_list)):
+            theta_list[j] = theta_list[j] - (alpha*grad_list_reg[j])
+        
         J_history.append(cost)
         
-    nn_paramsFinal = np.append(theta1.flatten(),theta2.flatten())
-    return nn_paramsFinal,J_history
+    nn_paramsFinal = np.append(theta_list[0].flatten(),theta_list[1].flatten())
+    for _ in range(2,len(theta_list)):
+        nn_paramsFinal = np.append(theta, theta_list[_].flatten())
+
+    return nn_paramsFinal,J_history,theta_list
 
 
 # %%
-def prediction(X,theta1,theta2):
+def prediction(X,theta_list):
     m = X.shape[0]
     X = np.hstack((np.ones((m,1)),X))
     
-    a1 = sigmoid(X @ theta1.T)
-    a1 = np.hstack((np.ones((m,1)),a1))
-    a2 = sigmoid(a1 @ theta2.T)
+    a = [] # lista de ativações
+    a.append( sigmoid(X @ theta_list[0].T) ) # adicionando o a0, ou seja features * first_hidden_layer
     
-    return np.argmax(a2,axis=1)+1
+    # X (5000,401) * (25,401)  logo a[0] = (5000 , 25) e  a[0][0]= (25,)
+    
+    #adicionando o Bias ao a0 antes de realizar os calculos
+    a[0] = np.hstack((np.ones((m,1)),a[0]))
+    
+    #Calculando a1,a2...an-1 e salvando em uma lista
+    for i in range(1,len(theta_list)-1):
+        a_tmp = sigmoid( a[i-1] @ theta_list[i].T )
+        a_tmp = np.hstack((np.ones((m,1)),a_tmp))
+        a.append(a_tmp)
+        
+    # para a ultima camada
+    a.append(sigmoid(a[-1] @ theta_list[-1].T))
+    
+    return np.argmax(a[-1],axis=1)+1
 
 
 # %%
 input_layer_size = 400
-hidden_layer_size = 25
+hidden_layer_size = 12
 num_labels = 10
-layer_list = [input_layer_size,hidden_layer_size,num_labels]
+layer_list = [input_layer_size,8,hidden_layer_size,num_labels]
 
 
-initial_theta1 = randInitializeWeights(input_layer_size,hidden_layer_size)
-initial_theta2 = randInitializeWeights(hidden_layer_size,num_labels)
+initial_theta1 = randInitializeWeights(input_layer_size,8)
+initial_theta2 = randInitializeWeights(8,hidden_layer_size)
+initial_theta3 = randInitializeWeights(hidden_layer_size,num_labels)
 initial_theta = np.append(initial_theta1.flatten(),initial_theta2.flatten())
+initial_theta = np.append(initial_theta,initial_theta3.flatten())
 # %%
 
-theta,J_history = gradientDescent(X,y,initial_theta,0.8,200,1,input_layer_size,hidden_layer_size,num_labels)
-theta1 = theta[:((input_layer_size+1)*hidden_layer_size)].reshape(hidden_layer_size,input_layer_size+1)
-theta2 = theta[((input_layer_size+1)*hidden_layer_size):].reshape(num_labels,hidden_layer_size+1)
+pesos_finais,J_history,theta_list = gradientDescent(X,y,initial_theta,0.8,200,1,layer_list)
+#theta1 = theta[:((input_layer_size+1)*hidden_layer_size)].reshape(hidden_layer_size,input_layer_size+1)
+#theta2 = theta[((input_layer_size+1)*hidden_layer_size):].reshape(num_labels,hidden_layer_size+1)
 
 # %%
-pred = prediction(X,theta1,theta2)
+pred = prediction(X,theta_list)
 print("Training Set Accuracy:",sum(pred[:,np.newaxis]==y)[0]/5000*100,"%")
 
  # %%
 plt.plot(range(len(J_history)), J_history)
 
-theta_list = computeCost(X, y, theta, layer_list, 1)[6]
-for i in range(1,2):
-    print (i)
+
