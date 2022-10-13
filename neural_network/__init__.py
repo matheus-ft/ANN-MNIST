@@ -1,8 +1,6 @@
+
 from .nn import (
-    sigmoid, 
-    sigmoidGradient,
-    computeCost, 
-    randInitializeWeights, 
+    assembly_nn, 
     gradientDescent, 
     prediction,
 )
