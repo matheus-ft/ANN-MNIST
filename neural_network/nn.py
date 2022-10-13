@@ -34,21 +34,15 @@ def _computeCost(X,y,nn, Lambda):
     grads = [np.zeros((layer.shape)) for layer in nn]
 
     for i in range(m):
-        xi = X[i,:]
-        ai = [ax[i,:] for ax in a]
+        ai = [X[i,:]] + [ax[i,:] for ax in a]
         di = [ai[-1] - y[i,:]]
 
-        di += [nn[j].T @ di[j-1].T * _sigmoidGradient(np.hstack((1,xi @ nn[j-1].T))) for j in range(len(nn)-1,0,-1)]
-
-
+        for j in range(len(nn)-1, 0, -1):
+            di.append((nn[j].T @ di[-1].T * _sigmoidGradient(np.hstack((1,ai[j-1] @ nn[j-1].T))))[1:])
         di.reverse()
-        grads[0] = grads[0] + di[0][1:][:,np.newaxis]@xi[:,np.newaxis].T
-        for j in range(1, len(grads)):
-            grads[j] = grads[j] + di[j].T[:,np.newaxis] @ ai[j-1][:,np.newaxis].T
         
-        #grads[0] = grads[0] + di[1][1:][:,np.newaxis]@xi[:,np.newaxis].T
-        #grads[1] = grads[1] + di[1].T[:,np.newaxis]@ai[0][:,np.newaxis].T
-
+        for j in range(len(grads)):
+            grads[j] = grads[j] + di[j].T[:,np.newaxis] @ ai[j][:,np.newaxis].T
 
     grads = [grad/m for grad in grads]
     grads_reg = [grad + (Lambda/m)*np.hstack((np.zeros((layer.shape[0],1)),layer[:,1:])) for grad, layer in zip(grads,nn)]
