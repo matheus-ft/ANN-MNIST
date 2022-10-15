@@ -16,21 +16,21 @@ def _acrossNN(X, nn):
     for layer in nn[1:]:
         a[-1] = np.hstack((np.ones((m,1)),a[-1]))
         a.append(_sigmoid(a[-1] @ layer.T))
-    
+
     return a
 
 
 def _computeCost(X,y,nn, Lambda):
     m = X.shape[0]
     X = np.hstack((np.ones((m,1)),X))
-    
+
     a = _acrossNN(X, nn)
-    
+
     J = sum(sum([-y_col*np.log(a_col)-(1-y_col)*np.log(1-a_col) for y_col, a_col in zip(y.T, a[-1].T)]))
-        
+
     cost = J/m
     reg_J = cost + Lambda/(2*m)*(sum([np.sum(layer[:,1:]**2) for layer in nn]))
-    
+
     grads = [np.zeros((layer.shape)) for layer in nn]
 
     for i in range(m):
@@ -40,13 +40,13 @@ def _computeCost(X,y,nn, Lambda):
         for j in range(len(nn)-1, 0, -1):
             di.append((nn[j].T @ di[-1].T * _sigmoidGradient(np.hstack((1,ai[j-1] @ nn[j-1].T))))[1:])
         di.reverse()
-        
+
         for j in range(len(grads)):
             grads[j] = grads[j] + di[j].T[:,np.newaxis] @ ai[j][:,np.newaxis].T
 
     grads = [grad/m for grad in grads]
     grads_reg = [grad + (Lambda/m)*np.hstack((np.zeros((layer.shape[0],1)),layer[:,1:])) for grad, layer in zip(grads,nn)]
-                                 
+
     return cost,reg_J,grads,grads_reg
 
 
@@ -63,23 +63,47 @@ def assembly_nn(input_layer: int,output_layer: int,hidden_layer: list = []):
 
 def gradientDescent(X,y,nn,alpha,nbr_iter,Lambda):
     J_history = []
-    
+
     for i in range(nbr_iter):
         cost,reg_J,grads,grads_reg = _computeCost(X,y,nn,Lambda)
         nn = [layer - alpha * grad_reg for layer, grad_reg in zip(nn, grads_reg)]
         J_history.append(reg_J)
         if i % 10 == 0:
             print(reg_J)
-    
+
     return nn,J_history
 
 
 def prediction(X,nn):
     m = X.shape[0]
     X = np.hstack((np.ones((m,1)),X))
-    
+
     a = _acrossNN(X, nn)
-    
+
     return np.argmax(a[-1],axis=1)+1
 
 
+def gradient_check(X, y, nn, epsilon=1e-4):
+    backprop_grads = _computeCost(X, y, nn, 0)[2]
+    error = []
+    for k in range(len(nn)):
+        layer = nn[k]
+        m, n = layer.shape
+        for i in range(m):
+            for j in range(n):
+                og_theta_ij = layer[i, j]
+
+                theta_plus = og_theta_ij + epsilon
+                nn[k][i, j] = theta_plus
+                J_plus = _computeCost(X, y, nn, 0)[0]
+
+                theta_minus = og_theta_ij - epsilon
+                nn[k][i, j] = theta_minus
+                J_minus = _computeCost(X, y, nn, 0)[0]
+
+                nn[k][i, j] = og_theta_ij
+                aprox_grad_ij = (J_plus - J_minus) / (2 * epsilon)
+                backprop_grad_ij = backprop_grads[k][i, j]
+                error.append(abs(aprox_grad_ij - backprop_grad_ij))
+    error = np.mean(error)
+    return True if error < epsilon else False
