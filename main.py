@@ -1,48 +1,49 @@
 # %%
-from datetime import datetime as dt
+import pandas as pd
 import numpy as np
-from scipy.io import loadmat
-from ANN_MNIST import (
-    assembly_nn,
-    gradientDescent,
-    prediction,
-)
+from ANN_MNIST import assembly_nn, gradientDescent, prediction
+from datetime import datetime as dt
+import matplotlib.pyplot as plt
 
 
 # %%
-agora = dt.now()
+X = pd.read_csv("data/imageMNIST.csv", decimal=",", header=None)
+X = np.array(X)
+X, X.shape
 
 # %%
-def get_data():
-    mat = loadmat("ex3data1.mat")
-    X = mat["X"]
-    Y = mat["y"]
-    y_t = Y.reshape(Y.shape[0],)
-    y = np.zeros((y_t.shape[0], len(np.unique(y_t))))
-    for i, j in zip(y_t, y):
-        j[i-1] = 1.
-    return X, y, Y
-
+y_raw = pd.read_csv("data/labelMNIST.csv", decimal=",", header=None)
+y_raw = np.array(y_raw)
+y_raw, y_raw.shape
 
 # %%
-input_layer_size = 400
-hidden_layers_size = [25]
-num_labels = 10
+n_examples = y_raw.shape[0]
+n_classes = len(np.unique(y_raw))
+y = np.zeros((n_examples, n_classes))
+for i, j in zip(y_raw, y):
+    j[i - 1] = 1
+y, y.shape
 
 # %%
-X, y, y_t = get_data()
+n_features = X.shape[1]
+hidden_layers = [25]
+nn = assembly_nn(n_features, n_classes, hidden_layers)
 
 # %%
-nn = assembly_nn(input_layer_size, num_labels, hidden_layers_size)
+now = dt.now()
+learning_rate = 0.8
+iterations = 800
+reg_lambda = 1
+nn, J_hist = gradientDescent(X, y, nn, learning_rate, iterations, reg_lambda)
+time_elapsed = dt.now() - now
 
 # %%
-nn,J_history = gradientDescent(X,y,nn,0.8,800,1)
+print(f"Time took for training: {time_elapsed}")
+plt.plot(range(iterations), J_hist)
 
 # %%
-print("tempo:",dt.now() - agora)
-
-# %%
-pred = prediction(X,nn)
-print("Training Set Accuracy:",sum(pred[:,np.newaxis]==y_t)[0]/5000*100,"%")
+pred = prediction(X, nn)
+accuracy = sum(pred[:, np.newaxis] == y_raw)[0] / 5000 * 100
+print(f"Training set accuracy: {accuracy} %")
 
 # %%
