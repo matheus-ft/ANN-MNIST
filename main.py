@@ -58,8 +58,8 @@ y_pred = prediction(data_s["X_test"], nn)[:, np.newaxis]
 y_real = (np.argmax(data_s["y_test"],axis=1)+1).reshape(data_s["y_test"].shape[0], 1)
 accuracy = sum(y_pred == y_real)[0] / y_real.shape[0] * 100
 print(f"Accuracy: {accuracy} %")
-error = metrics(data_s["X_test"], data_s["y_test"], nn, reg_lambda)[-1]
-print(f"Test cost: {error}")
+test_loss = metrics(data_s["X_test"], data_s["y_test"], nn, reg_lambda)[-1]
+print(f"Test loss: {test_loss}")
 
 # %%
 theta_meaning(nn[0], color_map="hot")
