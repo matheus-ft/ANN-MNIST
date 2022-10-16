@@ -32,16 +32,36 @@ print(did_pass_tighter)
 
 # %%
 X, y = get_data()
-data_s = split_data(X, y, train_len=.6, eval_len=.2, test_len=.2)
+
 
 # %%
+data_s = split_data(X, y, train_len=.6, eval_len=.2, test_len=.2)
+n_features = data_s["X_train"].shape[1]
+n_classes = data_s["y_train"].shape[1]
+hidden_layers = [25]
+learning_rate = 0.8
+iterations = 100
+lambda_auto = [1e-3, 3e-3, 1e-2, 3e-2, 0.1, 0.3, 1, 3, 10]
+lambda_selected = {"lambda": -1.0, "error": -1.0}
+J_eval_x_lambda = []
+for lambda_x in lambda_auto:
+    nn = assembly_nn(n_features, n_classes, hidden_layers)
+    nn, J_hist, J_eval_hist = gradientDescent(data_s["X_train"], data_s["y_train"], nn, learning_rate, iterations, lambda_x, data_s["X_eval"], data_s["y_eval"])
+    J_eval_x_lambda.append([lambda_x, min(J_eval_hist)])
+    if lambda_selected["error"] < 0 or min(J_eval_hist) < lambda_selected["error"]:
+        lambda_selected["lambda"] = lambda_x
+        lambda_selected["error"] = min(J_eval_hist)
+
+# %%
+
+data_s = split_data(X, y, train_len=.6, eval_len=.2, test_len=.2)
 n_classes = data_s["y_train"].shape[1]
 n_features = data_s["X_train"].shape[1]
 hidden_layers = [25]
 nn = assembly_nn(n_features, n_classes, hidden_layers)
 learning_rate = 0.8
 iterations = 2000
-reg_lambda = 1
+reg_lambda = lambda_selected["lambda"]
 
 # %%
 now = dt.now()
