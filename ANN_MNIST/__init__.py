@@ -1,4 +1,5 @@
 from .nn import (
+    metrics,
     assembly_nn,
     gradientDescent,
     prediction,
