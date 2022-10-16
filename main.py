@@ -5,12 +5,16 @@ from ANN_MNIST import (
     prediction,
     gradient_check,
     theta_meaning,
+    get_data,
+    split_data,
 )
 import numpy.random as npr
 import numpy as np
-import pandas as pd
 import matplotlib.pyplot as plt
 from datetime import datetime as dt
+
+
+# %%
 
 
 # %%
@@ -29,34 +33,21 @@ print(did_pass)
 print(did_pass_tighter)
 
 # %%
-X = pd.read_csv("data/imageMNIST.csv", decimal=",", header=None)
-X = np.array(X)
-X, X.shape
+X, y = get_data()
+data_s = split_data(X, y, train_len=.8, eval_len=.0, test_len=.2)
 
 # %%
-y_raw = pd.read_csv("data/labelMNIST.csv", decimal=",", header=None)
-y_raw = np.array(y_raw)
-y_raw, y_raw.shape
-
-# %%
-n_examples = y_raw.shape[0]
-n_classes = len(np.unique(y_raw))
-y = np.zeros((n_examples, n_classes))
-for i, j in zip(y_raw, y):
-    j[i - 1] = 1
-y, y.shape
-
-# %%
-n_features = X.shape[1]
+n_classes = data_s["y_train"].shape[1]
+n_features = data_s["X_train"].shape[1]
 hidden_layers = [25]
 nn = assembly_nn(n_features, n_classes, hidden_layers)
 learning_rate = 0.8
-iterations = 800
+iterations = 50
 reg_lambda = 1
 
 # %%
 now = dt.now()
-nn, J_hist = gradientDescent(X, y, nn, learning_rate, iterations, reg_lambda)
+nn, J_hist = gradientDescent(data_s["X_train"], data_s["y_train"], nn, learning_rate, iterations, reg_lambda)
 time_elapsed = dt.now() - now
 
 # %%
@@ -64,8 +55,9 @@ print(f"Time took for training: {time_elapsed}")
 plt.plot(range(iterations), J_hist)
 
 # %%
-pred = prediction(X, nn)
-accuracy = sum(pred[:, np.newaxis] == y_raw)[0] / 5000 * 100
+y_pred = prediction(data_s["X_test"], nn)[:, np.newaxis]
+y_real = (np.argmax(data_s["y_test"],axis=1)+1).reshape(data_s["y_test"].shape[0], 1)
+accuracy = sum(y_pred == y_real)[0] / y_real.shape[0] * 100
 print(f"Training set accuracy: {accuracy} %")
 
 # %%
