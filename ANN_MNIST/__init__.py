@@ -5,3 +5,7 @@ from .nn import (
     gradient_check,
     theta_meaning,
 )
+from .data import (
+    get_data,
+    split_data,
+)
