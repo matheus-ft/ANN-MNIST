@@ -21,16 +21,21 @@ def _acrossNN(X, nn):
     return a
 
 
-def _computeCost(X,y,nn, Lambda):
+def _metrics(X,y,nn,Lambda):
     m = X.shape[0]
     X = np.hstack((np.ones((m,1)),X))
 
     a = _acrossNN(X, nn)
 
-    J = sum(sum([-y_col*np.log(a_col)-(1-y_col)*np.log(1-a_col) for y_col, a_col in zip(y.T, a[-1].T)]))
+    cost = sum(sum([-y_col*np.log(a_col)-(1-y_col)*np.log(1-a_col) for y_col, a_col in zip(y.T, a[-1].T)])) / m
 
-    cost = J/m
     reg_J = cost + Lambda/(2*m)*(sum([np.sum(layer[:,1:]**2) for layer in nn]))
+
+    return m, X, a, cost, reg_J
+
+
+def _computeCost(X,y,nn, Lambda):
+    m, X, a, cost, reg_J = _metrics(X,y,nn,Lambda)
 
     grads = [np.zeros((layer.shape)) for layer in nn]
 
@@ -62,17 +67,22 @@ def assembly_nn(input_layer: int,output_layer: int,hidden_layer: list = []):
     return [_randInitializeWeights(in_,out_) for in_, out_ in zip(layers[:-1], layers[1:])]
 
 
-def gradientDescent(X,y,nn,alpha,nbr_iter,Lambda):
+def gradientDescent(X_train,y_train,nn,alpha,nbr_iter,Lambda,X_eval=[],y_eval=[],printe=True):
     J_history = []
+    J_history_eval = []
+    reg_J_eval = 0
 
     for i in range(nbr_iter):
-        cost,reg_J,grads,grads_reg = _computeCost(X,y,nn,Lambda)
+        if X_eval != []:
+            reg_J_eval = _metrics(X_eval,y_eval,nn,Lambda)[-1]
+            J_history_eval.append(reg_J_eval)
+        cost,reg_J,grads,grads_reg = _computeCost(X_train,y_train,nn,Lambda)
         nn = [layer - alpha * grad_reg for layer, grad_reg in zip(nn, grads_reg)]
         J_history.append(reg_J)
-        if i % 10 == 0:
-            print(reg_J)
+        if printe and i % 10 == 0:
+            print(f"train:{reg_J}, eval:{reg_J_eval}")
 
-    return nn,J_history
+    return nn,J_history,J_history_eval
 
 
 def prediction(X,nn):

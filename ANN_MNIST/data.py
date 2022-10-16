@@ -5,19 +5,16 @@ import pandas as pd
 def get_data():
     X = pd.read_csv("data/imageMNIST.csv", decimal=",", header=None)
     X = np.array(X)
-    #X, X.shape
 
     y_raw = pd.read_csv("data/labelMNIST.csv", decimal=",", header=None)
     y_raw = np.array(y_raw)
-    #y_raw, y_raw.shape
 
     n_examples = y_raw.shape[0]
     n_classes = len(np.unique(y_raw))
     y = np.zeros((n_examples, n_classes))
     for i, j in zip(y_raw, y):
         j[i - 1] = 1
-    #y, y.shape
-    
+
     return X, y
 
 
