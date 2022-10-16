@@ -15,9 +15,6 @@ from datetime import datetime as dt
 
 
 # %%
-
-
-# %%
 random_X = npr.rand(3, 3)
 random_y = np.identity(3)
 test_nn = assembly_nn(3, 3, [5])
@@ -34,7 +31,7 @@ print(did_pass_tighter)
 
 # %%
 X, y = get_data()
-data_s = split_data(X, y, train_len=.8, eval_len=.0, test_len=.2)
+data_s = split_data(X, y, train_len=.6, eval_len=.2, test_len=.2)
 
 # %%
 n_classes = data_s["y_train"].shape[1]
@@ -42,17 +39,18 @@ n_features = data_s["X_train"].shape[1]
 hidden_layers = [25]
 nn = assembly_nn(n_features, n_classes, hidden_layers)
 learning_rate = 0.8
-iterations = 50
+iterations = 5000
 reg_lambda = 1
 
 # %%
 now = dt.now()
-nn, J_hist = gradientDescent(data_s["X_train"], data_s["y_train"], nn, learning_rate, iterations, reg_lambda)
+nn, J_hist, J_eval_hist = gradientDescent(data_s["X_train"], data_s["y_train"], nn, learning_rate, iterations, reg_lambda, data_s["X_eval"], data_s["y_eval"])
 time_elapsed = dt.now() - now
 
 # %%
 print(f"Time took for training: {time_elapsed}")
 plt.plot(range(iterations), J_hist)
+plt.plot(range(iterations), J_eval_hist)
 
 # %%
 y_pred = prediction(data_s["X_test"], nn)[:, np.newaxis]
