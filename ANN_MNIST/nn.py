@@ -21,7 +21,7 @@ def _acrossNN(X, nn):
     return a
 
 
-def _metrics(X,y,nn,Lambda):
+def metrics(X,y,nn,Lambda):
     m = X.shape[0]
     X = np.hstack((np.ones((m,1)),X))
 
@@ -35,7 +35,7 @@ def _metrics(X,y,nn,Lambda):
 
 
 def _computeCost(X,y,nn, Lambda):
-    m, X, a, cost, reg_J = _metrics(X,y,nn,Lambda)
+    m, X, a, cost, reg_J = metrics(X,y,nn,Lambda)
 
     grads = [np.zeros((layer.shape)) for layer in nn]
 
@@ -74,7 +74,7 @@ def gradientDescent(X_train,y_train,nn,alpha,nbr_iter,Lambda,X_eval=[],y_eval=[]
 
     for i in range(nbr_iter):
         if X_eval != []:
-            reg_J_eval = _metrics(X_eval,y_eval,nn,Lambda)[-1]
+            reg_J_eval = metrics(X_eval,y_eval,nn,Lambda)[-1]
             J_history_eval.append(reg_J_eval)
         cost,reg_J,grads,grads_reg = _computeCost(X_train,y_train,nn,Lambda)
         nn = [layer - alpha * grad_reg for layer, grad_reg in zip(nn, grads_reg)]

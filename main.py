@@ -1,5 +1,6 @@
 # %%
 from ANN_MNIST import (
+    metrics,
     assembly_nn,
     gradientDescent,
     prediction,
@@ -39,7 +40,7 @@ n_features = data_s["X_train"].shape[1]
 hidden_layers = [25]
 nn = assembly_nn(n_features, n_classes, hidden_layers)
 learning_rate = 0.8
-iterations = 5000
+iterations = 2000
 reg_lambda = 1
 
 # %%
@@ -56,7 +57,9 @@ plt.plot(range(iterations), J_eval_hist)
 y_pred = prediction(data_s["X_test"], nn)[:, np.newaxis]
 y_real = (np.argmax(data_s["y_test"],axis=1)+1).reshape(data_s["y_test"].shape[0], 1)
 accuracy = sum(y_pred == y_real)[0] / y_real.shape[0] * 100
-print(f"Training set accuracy: {accuracy} %")
+print(f"Accuracy: {accuracy} %")
+error = metrics(data_s["X_test"], data_s["y_test"], nn, reg_lambda)[-1]
+print(f"Error: {error}")
 
 # %%
 theta_meaning(nn[0], color_map="hot")
