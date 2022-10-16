@@ -1,10 +1,26 @@
 # %%
-import pandas as pd
+from ANN_MNIST import assembly_nn, gradientDescent, prediction, gradient_check
+import numpy.random as npr
 import numpy as np
-from ANN_MNIST import assembly_nn, gradientDescent, prediction
-from datetime import datetime as dt
+import pandas as pd
 import matplotlib.pyplot as plt
+from datetime import datetime as dt
 
+
+# %%
+random_X = npr.rand(3, 3)
+random_y = np.identity(3)
+test_nn = assembly_nn(3, 3, [5])
+check = gradient_check(random_X, random_y, test_nn, epsilon=1e-4)
+tighter_check = gradient_check(random_X, random_y, test_nn, epsilon=1e-7)
+did_pass = "Gradient is correct." if check is True else "Gradient is incorrect."
+did_pass_tighter = (
+    "Gradient really is correct!"
+    if tighter_check is True
+    else "Gradient might be incorrect!"
+)
+print(did_pass)
+print(did_pass_tighter)
 
 # %%
 X = pd.read_csv("data/imageMNIST.csv", decimal=",", header=None)
