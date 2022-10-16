@@ -1,4 +1,5 @@
 import numpy as np
+import matplotlib.pyplot as plt
 
 
 def _sigmoid(z):
@@ -107,3 +108,23 @@ def gradient_check(X, y, nn, epsilon=1e-4):
                 error.append(abs(aprox_grad_ij - backprop_grad_ij))
     error = np.mean(error)
     return True if error < epsilon else False
+
+def scaling(line_vector):
+    over = np.max(line_vector)
+    under = np.min(line_vector)
+    return (line_vector - under) / (over - under)
+
+
+def theta_meaning(theta, color_map=None):
+    theta = theta[:, 1:]  # discarding the bias
+    hidden_nodes = theta.shape[0]
+    images = [scaling(theta[i]).reshape(20, 20, order="F") for i in range(hidden_nodes)]
+    grid_size = np.sqrt(hidden_nodes)
+    nrows = int(grid_size) if grid_size.is_integer() else int(grid_size) + 1
+    ncols = int(grid_size) if grid_size.is_integer() else int(grid_size) - 1
+    imgs = [images[i] if len(images) > i else None for i in range(nrows * ncols)]
+    _, axes = plt.subplots(nrows, ncols, figsize=(3 * ncols, 2 * nrows))
+    axes = axes.flatten()[: len(imgs)]
+    for img, ax in zip(imgs, axes.flatten()):
+        ax.imshow(img, cmap=color_map)
+        ax.axis("off")

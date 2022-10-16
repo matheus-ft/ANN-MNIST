@@ -3,4 +3,5 @@ from .nn import (
     gradientDescent,
     prediction,
     gradient_check,
+    theta_meaning,
 )

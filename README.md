@@ -34,3 +34,9 @@ The second line should be replaced by `.env\Scripts\activate` for (ugh) Windows.
 
 Done via `black` and `docformatter`.
 
+### Credits
+
+The `theta_meaning` function is heavily inspired by a snippet found in Stack Overflow during a debug session to make the
+plots better looking
+(https://stackoverflow.com/questions/41793931/plotting-images-side-by-side-using-matplotlib/66961099#66961099)
+
