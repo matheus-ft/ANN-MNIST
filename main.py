@@ -1,5 +1,11 @@
 # %%
-from ANN_MNIST import assembly_nn, gradientDescent, prediction, gradient_check
+from ANN_MNIST import (
+    assembly_nn,
+    gradientDescent,
+    prediction,
+    gradient_check,
+    theta_meaning,
+)
 import numpy.random as npr
 import numpy as np
 import pandas as pd
@@ -44,12 +50,12 @@ y, y.shape
 n_features = X.shape[1]
 hidden_layers = [25]
 nn = assembly_nn(n_features, n_classes, hidden_layers)
-
-# %%
-now = dt.now()
 learning_rate = 0.8
 iterations = 800
 reg_lambda = 1
+
+# %%
+now = dt.now()
 nn, J_hist = gradientDescent(X, y, nn, learning_rate, iterations, reg_lambda)
 time_elapsed = dt.now() - now
 
@@ -61,5 +67,8 @@ plt.plot(range(iterations), J_hist)
 pred = prediction(X, nn)
 accuracy = sum(pred[:, np.newaxis] == y_raw)[0] / 5000 * 100
 print(f"Training set accuracy: {accuracy} %")
+
+# %%
+theta_meaning(nn[0], color_map="hot")
 
 # %%
