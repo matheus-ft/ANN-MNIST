@@ -59,7 +59,7 @@ y_real = (np.argmax(data_s["y_test"],axis=1)+1).reshape(data_s["y_test"].shape[0
 accuracy = sum(y_pred == y_real)[0] / y_real.shape[0] * 100
 print(f"Accuracy: {accuracy} %")
 error = metrics(data_s["X_test"], data_s["y_test"], nn, reg_lambda)[-1]
-print(f"Error: {error}")
+print(f"Test cost: {error}")
 
 # %%
 theta_meaning(nn[0], color_map="hot")
