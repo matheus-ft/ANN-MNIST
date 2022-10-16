@@ -1,42 +1,41 @@
 # Projeto 1 MS/MT-571
 
-### Libraries
+## Para rodar o projeto
 
-- numpy
-- scipy
-- matplotlib
-- pandas
+### Requisitos
 
-### Notebooks
+- `python3`
 
-Saved with .py using `# %%` to separate cells and converted to .ipynb using `jupytext`.
+  - `pip`
 
-Instructions:
+  - `venv`
 
-```sh
-jupytext <file.ipynb> --to py:percent
-jupytext <file.py> --to notebook
-```
+### Instruções
 
-To run using JupyterLab and the virtual environment do
+Clone o repositório e faça:
 
 ```sh
 python3 -m venv .env
 source ./.env/bin/activate
 pip install -r requirements.txt
 python -m ipykernel install --name=.env
-jupyter-lab
+jupytext main.py --to notebook
+jupyter lab main.ipynb
 ```
 
-The second line should be replaced by `.env\Scripts\activate` for (ugh) Windows.
+Em seguida execute as células do notebook.
 
-### Formatting
+Se forem feitas mudanças no notebook que devem ser salvas, faça:
 
-Done via `black` and `docformatter`.
+```sh
+jupytext main.ipynb --to py:percent
+```
 
-### Credits
+Caso contrário basta reabrir o notebook numa próxima execução.
 
-The `theta_meaning` function is heavily inspired by a snippet found in Stack Overflow during a debug session to make the
-plots better looking
-(https://stackoverflow.com/questions/41793931/plotting-images-side-by-side-using-matplotlib/66961099#66961099)
+### Créditos
+
+A função `theta_meaning` é pesadamente inspirada num _snippet_ encontrado ao pesquisar modos de fazer a visualização dos
+tethas mais interessante
+(https://stackoverflow.com/questions/41793931/plotting-images-side-by-side-using-matplotlib/66961099#66961099).
 
