@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.optimize import minimize
 
 
 def _sigmoid(z):
@@ -56,6 +57,35 @@ def _computeCost(X,y,nn, Lambda):
     return cost,reg_J,grads,grads_reg
 
 
+def _deflatten(flat, shapes):
+    deflat = []
+    k = 0
+    for shape in shapes:
+        num_elems = shape[0] * shape[1]
+        matrix_k = np.array(flat[k:num_elems+k])
+        deflat.append(matrix_k.reshape(shape))
+        k += num_elems
+    return deflat
+
+
+def _flatten(array_of_arrays):
+    flat = []
+    for array in array_of_arrays:
+        flat.extend(array.flatten())
+    return flat
+
+
+def _loss(nn_flat, shapes, X, y, Lambda):
+    nn = _deflatten(nn_flat, shapes)
+    return _computeCost(X, y, nn, Lambda)[1]
+
+
+def _gradient_list(nn_flat, shapes, X, y, Lambda):
+    nn = _deflatten(nn_flat, shapes)
+    grads = _computeCost(X, y, nn, Lambda)[3]
+    return _flatten(grads)
+
+
 def _randInitializeWeights(L_in,L_out):
     epi = (6**(1/2))/(L_in+L_out)**(1/2)
     W = np.random.rand(L_out,L_in+1)*(2*epi)-epi
@@ -83,6 +113,33 @@ def gradientDescent(X_train,y_train,nn,alpha,nbr_iter,Lambda,X_eval=[],y_eval=[]
             print(f"train:{reg_J}, eval:{reg_J_eval}")
 
     return nn,J_history,J_history_eval
+
+
+def conjugate_gradient(X_train,y_train,nn,Lambda,X_eval=[],y_eval=[],printe=True):
+    nn_flat = _flatten(nn)
+    shapes = [layer.shape for layer in nn]
+
+    nn_hist = []
+    def intermediate_nn(nn_k):
+        nn_hist.append(nn_k)
+
+    nn_hist = [_deflatten(nn_k, shapes) for nn_k in nn_hist]
+    optimal = minimize(_loss, nn_flat, (shapes, X_train, y_train, Lambda), method='CG', jac=_gradient_list, callback=intermediate_nn, options={'return_all': printe})
+    if optimal.success is False:
+        raise Exception(f"Minimization with CG failed with the following message\n{optimal.message}")
+    nn = _deflatten(optimal.x, shapes)
+    J_history = optimal.fun
+
+    J_history_eval = []
+    if X_eval != []:
+        for i in range(optimal.nit):
+            reg_J_eval = _metrics(X_eval,y_eval,nn_hist[i],Lambda)[-1]
+            J_history_eval.append(reg_J_eval)
+            if printe and i % 10 == 0:
+                print(f"eval:{reg_J_eval}")
+
+    return nn, J_history, J_history_eval
+
 
 
 def prediction(X,nn):
