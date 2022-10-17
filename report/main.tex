@@ -1,0 +1,78 @@
+\documentclass[a4paper, 12pt]{article}
+
+\usepackage[portuges]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{indentfirst}
+\usepackage{graphicx}
+\usepackage{multicol,lipsum}
+
+\begin{document}
+%\maketitle
+
+\begin{titlepage}
+	\begin{center}
+	
+	%\begin{figure}[!ht]
+	%\centering
+	%\includegraphics[width=2cm]{c:/ufba.jpg}
+	%\end{figure}
+
+		\Huge{Universidade Estadual de Campinas - Unicamp}\\
+		\large{IMECC}\\ 
+		\large{MS571 - Aprendizado Máquinas : Aspectos T. e Práticos}\\ 
+		\vspace{15pt}
+        \vspace{95pt}
+        \textbf{\LARGE{Projeto Computacional I }}\\
+		%\title{{\large{Título}}}
+		\vspace{3,5cm}
+	\end{center}
+	
+	\begin{flushleft}
+		\begin{tabbing}
+			Matheus Feres Turcheti 241727\\
+            Othavio Henrique de Jesus Ayres 246666\\
+            Ricardo Raimundo da Silva 120094\\
+	\end{tabbing}
+ \end{flushleft}
+	\vspace{1cm}
+	
+	\begin{center}
+		\vspace{\fill}
+			 Outubro\\
+		 2022
+			\end{center}
+\end{titlepage}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% % % % % % % % %FOLHA DE ROSTO % % % % % % % % % %
+
+% % % % % % % % % % % % % % % % % % % % % % % % % %
+\newpage
+\tableofcontents
+\thispagestyle{empty}
+
+\newpage
+\pagenumbering{arabic}
+% % % % % % % % % % % % % % % % % % % % % % % % % % %
+\input{texto/implementacao_NN.tex}
+
+\input{texto/gradient_check.tex}
+
+\input{texto/thetas_significado.tex}
+
+\input{texto/selecao_modelo.tex}
+
+% --------------------------------------------------------
+% REFERÊNCIAS BIBLIOGRÁFICAS
+% 
+\newpage
+
+\bibliographystyle{unsrt}
+\nocite{*}
+\bibliography{bibliography}
+
+\end{document}
+
+
+
