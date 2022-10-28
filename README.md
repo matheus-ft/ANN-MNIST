@@ -1,18 +1,21 @@
-# Projeto 1 MS/MT-571
+# Regularized neural network for identification of handwritten single digits
 
-## Para rodar o projeto
+## Notes
 
-### Requisitos
+This was originally a repo for a uni project, but the master branch might contain changes made after such venture,
+including, but not limited to, translation and contribution from more or less people.
 
-- `python3`
+## Dependencies
+
+- `python3`, version >= 3.10
 
   - `pip`
 
   - `venv`
 
-### Instruções
+## Instructions
 
-Clone o repositório e faça:
+Clone the repo and do:
 
 ```sh
 python3 -m venv .env
@@ -23,19 +26,18 @@ jupytext main.py --to notebook
 jupyter lab main.ipynb
 ```
 
-Em seguida execute as células do notebook.
+Then execute the notebook cells.
 
-Se forem feitas mudanças no notebook que devem ser salvas, faça:
+If any changes that should be kept are made, save the file and do:
 
 ```sh
 jupytext main.ipynb --to py:percent
 ```
 
-Caso contrário basta reabrir o notebook numa próxima execução.
+Otherwise, simply open the notebook again in another ocasion.
 
-### Créditos
+## Credits
 
-A função `theta_meaning` é pesadamente inspirada num _snippet_ encontrado ao pesquisar modos de fazer a visualização dos
-tethas mais interessante
-(https://stackoverflow.com/questions/41793931/plotting-images-side-by-side-using-matplotlib/66961099#66961099).
+The function `theta_meaning` is heavily inspired in
+https://stackoverflow.com/questions/41793931/plotting-images-side-by-side-using-matplotlib/66961099#66961099.
 
